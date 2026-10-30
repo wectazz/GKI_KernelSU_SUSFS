@@ -1609,6 +1609,9 @@ jobs:
           # фикс апстрим-бага: функция закомментирована, но вызывается из richtap-блока
           sed -i 's/aw86927_rtp_get_fifo_afi(aw86927)/aw86927_haptic_rtp_get_fifo_afs(aw86927)/g' \
             "$KMODS/drivers/input/misc/aw_haptic/aw86927.c"
+          # arm64: calc_vm_flag_bits -> shmem_file -> shmem_aops (нет в GKI Module.symvers)
+          sed -i 's/ | calc_vm_flag_bits(filp, MAP_SHARED)//' \
+            "$KMODS/drivers/input/misc/aw_haptic/aw_haptic.c"
 
           sed -i 's|\.name = "aw8697_haptic"|.name = "awinic_haptic"|' \
             "$KMODS/drivers/input/misc/aw_haptic/aw_haptic.c"
