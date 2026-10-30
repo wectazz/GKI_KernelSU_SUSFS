@@ -1594,6 +1594,38 @@ jobs:
               echo "退出码: $BUILD_STATUS"
             } >> "$LOG_FILE"
             exit "$BUILD_STATUS"
+      - name: 构建 haptic 模块（Richtap）
+        run: |
+          set -euo pipefail
+
+          KMODS="$GITHUB_WORKSPACE/kmods"
+          rm -rf "$KMODS"
+          git clone --depth 1 -b lineage-23.2 \
+            https://github.com/mt6897-devs/android_kernel_device_modules_6.1 "$KMODS"
+
+          sed -i 's|^//#define AAC_RICHTAP_SUPPORT|#define AAC_RICHTAP_SUPPORT|' \
+            "$KMODS/drivers/input/misc/aw_haptic/aw_haptic.h"
+          sed -i 's|\.name = "aw8697_haptic"|.name = "awinic_haptic"|' \
+            "$KMODS/drivers/input/misc/aw_haptic/aw_haptic.c"
+
+          OD=""
+          for d in $(find "$KERNEL_ROOT" -name Module.symvers -printf '%h\n' 2>/dev/null); do
+            if [ -f "$d/.config" ]; then OD="$d"; break; fi
+          done
+          echo "build dir: ${OD:-NOT FOUND}"
+          test -n "$OD"
+
+          make -C "$KERNEL_ROOT/common" O="$OD" ARCH=arm64 LLVM=1 \
+               M="$KMODS/drivers/input/misc/aw_haptic" modules
+
+          ls -l "$KMODS/drivers/input/misc/aw_haptic/haptic.ko"
+
+      - name: 上传 haptic 模块
+        uses: actions/upload-artifact@v6
+        with:
+          name: haptic-richtap-${{ env.CONFIG }}
+          path: kmods/drivers/input/misc/aw_haptic/haptic.ko
+          if-no-files-found: error
 
       - name: 整理编译失败日志
         if: ${{ always() && steps.compile_kernel.outcome == 'failure' }}
