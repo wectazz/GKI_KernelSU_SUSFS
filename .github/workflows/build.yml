@@ -1615,7 +1615,13 @@ jobs:
           echo "build dir: ${OD:-NOT FOUND}"
           test -n "$OD"
 
+          if [ -d "$KERNEL_ROOT/prebuilts/clang/host/linux-x86/clang-r487747c/bin" ]; then
+            export PATH="$KERNEL_ROOT/prebuilts/clang/host/linux-x86/clang-r487747c/bin:$PATH"
+          fi
+          clang --version
+
           make -C "$KERNEL_ROOT/common" O="$OD" ARCH=arm64 LLVM=1 \
+               CONFIG_INPUT_AW_HAPTIC=m \
                M="$KMODS/drivers/input/misc/aw_haptic" modules
 
           ls -l "$KMODS/drivers/input/misc/aw_haptic/haptic.ko"
